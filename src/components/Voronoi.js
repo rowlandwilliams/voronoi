@@ -5,12 +5,13 @@ import voronoi from "d3-voronoi/src/voronoi";
 function Voronoi() {
   const width = window.innerWidth;
   const height = window.innerHeight;
+  var nCells = 10000;
 
   function generateCoords(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
   }
   const dataset = [];
-  for (var i = 0; i < 1000; i++) {
+  for (var i = 0; i < nCells; i++) {
     dataset.push({
       x: generateCoords(0, width),
       y: generateCoords(0, height),
@@ -22,12 +23,16 @@ function Voronoi() {
 
   useEffect(() => {
     plotPoints();
+    window.addEventListener("resize", plotPoints());
   }, [dataset]);
 
   const plotPoints = () => {
+    d3.select(".svg").remove();
+
     const svg = d3
       .select(ref.current)
       .append("svg")
+      .attr("class", "svg")
       .attr("viewBox", [0, 0, width, height]);
 
     var voronoiTest = voronoi()
@@ -40,23 +45,29 @@ function Voronoi() {
 
     var voronoiGroup = svg.append("g").attr("class", "voronoi");
 
+    var cols = Array.from(
+      { length: nCells },
+      () => "#" + Math.floor(Math.random() * 16777215).toString(16)
+    );
+
     voronoiGroup
       .selectAll("path")
       .data(voronoiTest(dataset).polygons())
       .enter()
       .append("path")
+      .attr("fill", (d, i) => cols[i])
       .attr("d", function (d) {
         return d ? "M" + d.join("L") + "Z" : null;
       });
 
-    svg
-      .selectAll("circle")
-      .data(dataset)
-      .join("circle")
-      .attr("cx", (d) => d.x)
-      .attr("cy", (d) => d.y)
-      .attr("r", 3)
-      .attr("fill", "blue");
+    // svg
+    //   .selectAll("circle")
+    //   .data(dataset)
+    //   .join("circle")
+    //   .attr("cx", (d) => d.x)
+    //   .attr("cy", (d) => d.y)
+    //   .attr("r", 3)
+    //   .attr("fill", "blue");
   };
 
   return (
