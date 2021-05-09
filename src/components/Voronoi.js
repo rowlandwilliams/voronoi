@@ -1,21 +1,19 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import voronoi from "d3-voronoi/src/voronoi";
+import "./styles.css";
 
 function Voronoi() {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  var nCells = 10000;
+  var nCells = 1000;
 
   function generateCoords(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
   }
   const dataset = [];
   for (var i = 0; i < nCells; i++) {
-    dataset.push({
-      x: generateCoords(0, width),
-      y: generateCoords(0, height),
-    });
+    dataset.push([generateCoords(0, width), generateCoords(0, height)]);
   }
   console.log(dataset);
 
@@ -36,8 +34,8 @@ function Voronoi() {
       .attr("viewBox", [0, 0, width, height]);
 
     var voronoiTest = voronoi()
-      .x((d) => d.x)
-      .y((d) => d.y)
+      .x((d) => d[0])
+      .y((d) => d[1])
       .extent([
         [0, 0],
         [width, height],
@@ -60,14 +58,22 @@ function Voronoi() {
         return d ? "M" + d.join("L") + "Z" : null;
       });
 
-    // svg
-    //   .selectAll("circle")
-    //   .data(dataset)
-    //   .join("circle")
-    //   .attr("cx", (d) => d.x)
-    //   .attr("cy", (d) => d.y)
-    //   .attr("r", 3)
-    //   .attr("fill", "blue");
+    svg
+      .append("g")
+      .attr("class", "links")
+      .selectAll("line")
+      .data(voronoiTest.links(dataset))
+      .enter()
+      .append("line");
+    //   .call(redrawLink);
+    svg
+      .selectAll("circle")
+      .data(dataset)
+      .join("circle")
+      .attr("cx", (d) => d[0])
+      .attr("cy", (d) => d[1])
+      .attr("r", 1)
+      .attr("fill", "blue");
   };
 
   return (
