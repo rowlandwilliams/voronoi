@@ -1,28 +1,23 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import voronoi from "d3-voronoi/src/voronoi";
-import "./styles.css";
+import pointer from "d3-selection/src/pointer.js";
 
 function Voronoi() {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  var nCells = 1000;
+  var nCells = 100;
 
-  function generateCoords(min, max) {
-    return Math.floor(Math.random() * (max - min + 1) + min);
-  }
-  const dataset = [];
-  for (var i = 0; i < nCells; i++) {
-    dataset.push([generateCoords(0, width), generateCoords(0, height)]);
-  }
-  console.log(dataset);
+  var sites = d3.range(nCells).map(function (d) {
+    return [Math.random() * width, Math.random() * height];
+  });
 
   const ref = useRef();
 
   useEffect(() => {
     plotPoints();
     window.addEventListener("resize", plotPoints());
-  }, [dataset]);
+  }, [sites]);
 
   const plotPoints = () => {
     d3.select(".svg").remove();
@@ -31,7 +26,8 @@ function Voronoi() {
       .select(ref.current)
       .append("svg")
       .attr("class", "svg")
-      .attr("viewBox", [0, 0, width, height]);
+      .attr("viewBox", [0, 0, width, height])
+      .on("mousemove", moved);
 
     var voronoiTest = voronoi()
       .x((d) => d[0])
@@ -41,39 +37,83 @@ function Voronoi() {
         [width, height],
       ]);
 
-    var voronoiGroup = svg.append("g").attr("class", "voronoi");
-
     var cols = Array.from(
       { length: nCells },
       () => "#" + Math.floor(Math.random() * 16777215).toString(16)
     );
 
-    voronoiGroup
+    var polygon = svg
+      .append("g")
+      .attr("class", "voronoi")
       .selectAll("path")
-      .data(voronoiTest(dataset).polygons())
+      .data(voronoiTest(sites).polygons())
       .enter()
       .append("path")
       .attr("fill", (d, i) => cols[i])
-      .attr("d", function (d) {
-        return d ? "M" + d.join("L") + "Z" : null;
-      });
+      .call(redrawPolygon);
 
-    svg
+    var link = svg
       .append("g")
       .attr("class", "links")
       .selectAll("line")
-      .data(voronoiTest.links(dataset))
+      .data(voronoiTest.links(sites))
       .enter()
-      .append("line");
-    //   .call(redrawLink);
-    svg
+      .append("line")
+      .call(redrawLink);
+
+    var site = svg
       .selectAll("circle")
-      .data(dataset)
+      .data(sites)
       .join("circle")
-      .attr("cx", (d) => d[0])
-      .attr("cy", (d) => d[1])
       .attr("r", 1)
-      .attr("fill", "blue");
+      .attr("fill", "blue")
+      .call(redrawSite);
+
+    function moved(event) {
+      sites[0] = d3.pointer(event);
+      redraw();
+    }
+
+    function redraw() {
+      var diagram = voronoiTest(sites);
+      polygon = polygon.data(diagram.polygons()).call(redrawPolygon);
+      link = link.data(diagram.links());
+      link.exit().remove();
+      link = link.enter().append("line").merge(link).call(redrawLink);
+      site = site.data(sites).call(redrawSite);
+    }
+
+    function redrawPolygon(polygon) {
+      polygon.attr("d", function (d) {
+        return d ? "M" + d.join("L") + "Z" : null;
+      });
+    }
+
+    function redrawLink(link) {
+      link
+        .attr("x1", function (d) {
+          return d.source[0];
+        })
+        .attr("y1", function (d) {
+          return d.source[1];
+        })
+        .attr("x2", function (d) {
+          return d.target[0];
+        })
+        .attr("y2", function (d) {
+          return d.target[1];
+        });
+    }
+
+    function redrawSite(site) {
+      site
+        .attr("cx", function (d) {
+          return d[0];
+        })
+        .attr("cy", function (d) {
+          return d[1];
+        });
+    }
   };
 
   return (
@@ -81,7 +121,6 @@ function Voronoi() {
       style={{
         width: "100%",
         height: "100vh",
-
         boxSizing: "border-box",
       }}
       ref={ref}
