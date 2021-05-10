@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import voronoi from "d3-voronoi/src/voronoi";
+import { interpolateRainbow } from "d3";
+// import { interpolateRainbow } from "d3-interpolate";
 
 function Voronoi() {
   const width = window.innerWidth;
@@ -12,6 +14,8 @@ function Voronoi() {
   });
 
   const ref = useRef();
+
+  console.log(interpolateRainbow(Math.random()));
 
   useEffect(() => {
     plotPoints();
@@ -28,7 +32,7 @@ function Voronoi() {
       .attr("viewBox", [0, 0, width, height])
       .on("mousemove", moved);
 
-    var voronoiTest = voronoi()
+    var generateVoronoi = voronoi()
       .x((d) => d[0])
       .y((d) => d[1])
       .extent([
@@ -45,29 +49,31 @@ function Voronoi() {
       .append("g")
       .attr("class", "voronoi")
       .selectAll("path")
-      .data(voronoiTest(sites).polygons())
+      .data(generateVoronoi(sites).polygons())
       .enter()
       .append("path")
-      .attr("fill", (d, i) => cols[i])
+      .attr("fill", (d, i) => interpolateRainbow(Math.random()))
+      .attr("stroke", "#333333")
+      // .attr("opacity", (d, i) => Math.random())
       .call(redrawPolygon);
 
     var link = svg
       .append("g")
       .attr("class", "links")
       .selectAll("line")
-      .data(voronoiTest(sites).links())
+      .data(generateVoronoi(sites).links())
       .enter()
       .append("line")
-      .attr("stroke", "blue")
-      .call(redrawLink);
+      .attr("stroke", "blue");
+    // .call(redrawLink);
 
     var site = svg
       .selectAll("circle")
       .data(sites)
       .join("circle")
       .attr("r", 1)
-      .attr("fill", "white")
-      .call(redrawSite);
+      .attr("fill", "white");
+    // .call(redrawSite);
 
     function moved(event) {
       sites[0] = d3.pointer(event);
@@ -75,12 +81,12 @@ function Voronoi() {
     }
 
     function redraw() {
-      var diagram = voronoiTest(sites);
+      var diagram = generateVoronoi(sites);
       polygon = polygon.data(diagram.polygons()).call(redrawPolygon);
-      link = link.data(diagram.links());
-      link.exit().remove();
-      link = link.enter().append("line").merge(link).call(redrawLink);
-      site = site.data(sites).call(redrawSite);
+      // link = link.data(diagram.links());
+      // link.exit().remove();
+      // link = link.enter().append("line").merge(link).call(redrawLink);
+      // site = site.data(sites).call(redrawSite);
     }
 
     function redrawPolygon(polygon) {
