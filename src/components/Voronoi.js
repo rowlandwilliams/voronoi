@@ -1,12 +1,11 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import voronoi from "d3-voronoi/src/voronoi";
-import pointer from "d3-selection/src/pointer.js";
 
 function Voronoi() {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  var nCells = 100;
+  var nCells = 150;
 
   var sites = d3.range(nCells).map(function (d) {
     return [Math.random() * width, Math.random() * height];
@@ -56,9 +55,10 @@ function Voronoi() {
       .append("g")
       .attr("class", "links")
       .selectAll("line")
-      .data(voronoiTest.links(sites))
+      .data(voronoiTest(sites).links())
       .enter()
       .append("line")
+      .attr("stroke", "blue")
       .call(redrawLink);
 
     var site = svg
@@ -66,7 +66,7 @@ function Voronoi() {
       .data(sites)
       .join("circle")
       .attr("r", 1)
-      .attr("fill", "blue")
+      .attr("fill", "white")
       .call(redrawSite);
 
     function moved(event) {
