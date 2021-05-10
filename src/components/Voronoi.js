@@ -8,6 +8,7 @@ import {
   interpolateCool,
   interpolateInferno,
   interpolateYlOrRd,
+  merge,
 } from "d3";
 
 function Voronoi() {
@@ -67,66 +68,67 @@ function Voronoi() {
         [width, height],
       ]);
 
-    var intial = svg
-      .append("g")
-      .attr("class", "voronoi")
-      .selectAll("path")
-      .data(generateVoronoi(sites).polygons())
-      .enter()
-      .append("path")
-      .attr("fill", (d, i) => color(Math.random()))
-      .attr("stroke", "#333333")
-      .call(redrawPolygon);
+    var initialPolygons = generateVoronoi(sites).polygons();
 
-    var polygons = generateVoronoi(sites).polygons();
-
-    // [min.x, max.x, min.y, max.y]
-
-    polygons = polygons.map((x) => x.filter((y) => y !== "data"));
-
-    polygons.forEach((x, i) => {
-      const bounds = [
-        Math.min(...x.map((y) => y[0])),
-        Math.max(...x.map((y) => y[0])),
-        Math.min(...x.map((y) => y[1])),
-        Math.max(...x.map((y) => y[1])),
-      ];
-
-      // generate new points
-      const level2 = generatePoints(
-        100,
-        bounds[0],
-        bounds[1],
-        bounds[2],
-        bounds[3]
-      );
-      console.log(bounds);
-
-      var test = svg.append("g").attr("class", "suh" + i);
-
-      var generateVoronoi2 = voronoi()
-        .x((d) => d[0])
-        .y((d) => d[1])
-        .extent([
-          [0, 0],
-          [bounds[1], bounds[3]],
-        ]);
-
-      test
+    const drawVoronoi = (parent, polygons, level) => {
+      parent
+        .append("g")
+        .attr("class", "voronoi" + level)
         .selectAll("path")
-        .data(generateVoronoi2(level2).polygons())
-        .enter()
-        .append("path")
+        .data(polygons)
+        .join("path")
+        .attr("data-level", level)
         .attr("fill", (d, i) => color(Math.random()))
         .attr("stroke", "#333333")
         .call(redrawPolygon);
-    });
+    };
+
+    const drawSubVoronoi = (parent, parentLevel) => {
+      var parentPolygons = d3.selectAll(
+        'path[data-level="' + parentLevel + '"]'
+      );
+
+      parentPolygons.each((x, i) => {
+        var filt = x.filter((y) => y !== "data");
+        console.log(filt);
+
+        const bounds = [
+          Math.min(...filt.map((y) => y[0])),
+          Math.max(...filt.map((y) => y[0])),
+          Math.min(...filt.map((y) => y[1])),
+          Math.max(...filt.map((y) => y[1])),
+        ];
+
+        const newData = generatePoints(
+          30,
+          bounds[0],
+          bounds[1],
+          bounds[2],
+          bounds[3]
+        );
+
+        var generateVoronoi2 = voronoi()
+          .x((d) => d[0])
+          .y((d) => d[1])
+          .extent([
+            [bounds[0], bounds[2]],
+            [bounds[1], bounds[3]],
+          ]);
+
+        var newPolygons = generateVoronoi2(newData).polygons();
+        return drawVoronoi(parent, newPolygons, parentLevel + 1);
+      });
+    };
 
     function redrawPolygon(polygon) {
       polygon.attr("d", function (d) {
         return d ? "M" + d.join("L") + "Z" : null;
       });
     }
+
+    drawVoronoi(svg, initialPolygons, 1);
+    drawSubVoronoi(svg, 1);
+    drawSubVoronoi(svg, 2);
   };
 
   return (
@@ -143,3 +145,14 @@ function Voronoi() {
 }
 
 export default Voronoi;
+
+// var test = svg.append("g").attr("class", className + i);
+
+// test
+//   .selectAll("path")
+//   .data(generateVoronoi2(newData).polygons())
+//   .enter()
+//   .append("path")
+//   .attr("fill", (d, i) => color(Math.random()))
+//   .attr("stroke", "#333333")
+//   .call(redrawPolygon);
