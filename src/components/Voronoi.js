@@ -1,13 +1,25 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import voronoi from "d3-voronoi/src/voronoi";
-import { interpolateRainbow } from "d3";
-// import { interpolateRainbow } from "d3-interpolate";
+import {
+  interpolateRainbow,
+  interpolatePlasma,
+  interpolateTurbo,
+  interpolateCool,
+} from "d3";
 
 function Voronoi() {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  var nCells = 150;
+  const colorSchemes = [
+    interpolatePlasma,
+    interpolateRainbow,
+    interpolateTurbo,
+    interpolateCool,
+  ];
+  const color = colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+  console.log(color);
+  var nCells = 100;
 
   var sites = d3.range(nCells).map(function (d) {
     return [Math.random() * width, Math.random() * height];
@@ -15,8 +27,7 @@ function Voronoi() {
 
   const ref = useRef();
 
-  console.log(interpolateRainbow(Math.random()));
-
+  // const colorScheme =
   useEffect(() => {
     plotPoints();
     window.addEventListener("resize", plotPoints());
@@ -52,9 +63,8 @@ function Voronoi() {
       .data(generateVoronoi(sites).polygons())
       .enter()
       .append("path")
-      .attr("fill", (d, i) => interpolateRainbow(Math.random()))
+      .attr("fill", (d, i) => color(Math.random()))
       .attr("stroke", "#333333")
-      // .attr("opacity", (d, i) => Math.random())
       .call(redrawPolygon);
 
     var link = svg
