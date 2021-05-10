@@ -58,11 +58,6 @@ function Voronoi() {
         [width, height],
       ]);
 
-    var cols = Array.from(
-      { length: nCells },
-      () => "#" + Math.floor(Math.random() * 16777215).toString(16)
-    );
-
     var polygon = svg
       .append("g")
       .attr("class", "voronoi")
@@ -96,6 +91,7 @@ function Voronoi() {
       style={{
         width: "100%",
         height: "100vh",
+        padding: "10px",
         boxSizing: "border-box",
       }}
       ref={ref}
