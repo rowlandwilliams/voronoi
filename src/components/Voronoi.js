@@ -28,7 +28,7 @@ function Voronoi() {
   const color = colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
 
   // define dataset
-  var initialCells = 80;
+  var initialCells = 8;
   // var nCells = 100;
 
   const generatePoints = (nCells, startX, endX, startY, endY) =>
@@ -94,7 +94,7 @@ function Voronoi() {
 
       // generate new points
       const level2 = generatePoints(
-        10,
+        100,
         bounds[0],
         bounds[1],
         bounds[2],
@@ -103,15 +103,6 @@ function Voronoi() {
       console.log(bounds);
 
       var test = svg.append("g").attr("class", "suh" + i);
-
-      test
-        .selectAll("circle")
-        .data(level2)
-        .join("circle")
-        .attr("cx", (d) => d[0])
-        .attr("cy", (d) => d[1])
-        .attr("r", 3)
-        .attr("fill", "blue");
 
       var generateVoronoi2 = voronoi()
         .x((d) => d[0])
@@ -123,7 +114,7 @@ function Voronoi() {
 
       test
         .selectAll("path")
-        .data(generateVoronoi2(sites).polygons())
+        .data(generateVoronoi2(level2).polygons())
         .enter()
         .append("path")
         .attr("fill", (d, i) => color(Math.random()))
