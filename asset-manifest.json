@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/voronoi/static/css/main.02b95ae3.chunk.css",
+    "main.js": "/voronoi/static/js/main.3544cbe9.chunk.js",
+    "main.js.map": "/voronoi/static/js/main.3544cbe9.chunk.js.map",
+    "runtime-main.js": "/voronoi/static/js/runtime-main.adbcfb60.js",
+    "runtime-main.js.map": "/voronoi/static/js/runtime-main.adbcfb60.js.map",
+    "static/js/2.7e9fdeb4.chunk.js": "/voronoi/static/js/2.7e9fdeb4.chunk.js",
+    "static/js/2.7e9fdeb4.chunk.js.map": "/voronoi/static/js/2.7e9fdeb4.chunk.js.map",
+    "index.html": "/voronoi/index.html",
+    "static/css/main.02b95ae3.chunk.css.map": "/voronoi/static/css/main.02b95ae3.chunk.css.map",
+    "static/js/2.7e9fdeb4.chunk.js.LICENSE.txt": "/voronoi/static/js/2.7e9fdeb4.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.adbcfb60.js",
+    "static/js/2.7e9fdeb4.chunk.js",
+    "static/css/main.02b95ae3.chunk.css",
+    "static/js/main.3544cbe9.chunk.js"
+  ]
+}
