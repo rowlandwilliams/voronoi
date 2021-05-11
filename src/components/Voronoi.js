@@ -8,6 +8,7 @@ import {
   interpolateCool,
   interpolateInferno,
   interpolateYlOrRd,
+  interpolateCividis,
 } from "d3";
 import "./styles.css";
 
@@ -24,12 +25,12 @@ function Voronoi() {
     interpolateCool,
     interpolateInferno,
     interpolateYlOrRd,
+    interpolateCividis,
   ];
 
-  const color = colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
-
   // number of initial polygons
-  var pointSeed = 8;
+  // var pointSeed = 10;
+  var pointSeed = Math.floor(Math.random() * 10) + 5;
 
   // generate points for a given g size
   function generateRandomPoints(nPoints, minX, maxX, minY, maxY) {
@@ -50,12 +51,16 @@ function Voronoi() {
     window.innerHeight
   );
 
+  var pickColor = Math.random() < 0.5;
+  var colorGlobal =
+    colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+
   // plot on load
   useEffect(() => {
-    plot();
+    plot(pickColor);
   }, [points]);
 
-  // initial voronoit function
+  // initial voronoi function
   var generateVoronoi = voronoi().extent([
     [0, 0],
     [width, height],
@@ -63,18 +68,24 @@ function Voronoi() {
 
   var initialPolygons = generateVoronoi(points).polygons();
 
-  const plot = () => {
+  const plot = (pickColor) => {
     var svg = d3.select(".chart").attr("width", "100%").attr("height", "100%");
 
     // append defs here and pass down
     var defs = d3.select(".chart").append("defs");
 
-    drawVoronoi(svg, initialPolygons, undefined, 0);
-    var subPolygons = drawSubPolygons(svg, initialPolygons, 1, defs);
-    subPolygons = drawSubPolygons(svg, subPolygons, 2, defs);
+    drawVoronoi(svg, initialPolygons, undefined, 0, pickColor);
+    var subPolygons = drawSubPolygons(svg, initialPolygons, 1, defs, pickColor);
+    subPolygons = drawSubPolygons(svg, subPolygons, 2, defs, pickColor);
+    // drawVoronoi(svg, subPolygons, undefined, 3);
   };
 
-  function drawVoronoi(parent, polygons, clipArea, level) {
+  function drawVoronoi(parent, polygons, clipArea, level, pickColor) {
+    if (pickColor) {
+      var localColor =
+        colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+    }
+
     parent
       .insert("g", ":first-child")
       .attr("clip-path", function (d) {
@@ -93,13 +104,17 @@ function Voronoi() {
         d3.hsl("#000").brighter(level);
       })
       .attr("fill", function () {
-        return level === 0 ? "" : color(Math.random());
+        return level === 0
+          ? ""
+          : pickColor
+          ? localColor(Math.random())
+          : colorGlobal(Math.random());
       })
       .attr("fill-opacity", "0.3")
       .attr("d", polyToPath);
   }
 
-  function drawSubPolygons(parent, parentPols, level, defs) {
+  function drawSubPolygons(parent, parentPols, level, defs, pickColor) {
     var parentLevel = level - 1;
 
     // find all parent polygons using parent level
@@ -133,11 +148,11 @@ function Voronoi() {
         d3.select(this.parentNode),
         polygons2,
         "cp-" + parentLevel + "-" + i,
-        level
+        level,
+        pickColor
       );
       addClipPath(d, "cp-" + parentLevel + "-" + i, defs);
     });
-
   }
 
   function addClipPath(outline, pathId, defs) {
@@ -160,3 +175,13 @@ function Voronoi() {
 }
 
 export default Voronoi;
+
+// function moved(event) {
+//   sites[0] = d3.pointer(event);
+//   redraw();
+// }
+
+// function redraw() {
+//   var diagram = generateVoronoi(sites);
+//   polygon = polygon.data(diagram.polygons()).call(redrawPolygon);
+// }
