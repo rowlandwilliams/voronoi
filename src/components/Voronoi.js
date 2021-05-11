@@ -8,23 +8,30 @@ import {
   interpolateCool,
   interpolateInferno,
   interpolateYlOrRd,
-  merge,
-  polygonCentroid,
 } from "d3";
 import "./styles.css";
 
-function Voronoi2() {
-  var margin = { top: 50, bottom: 20, right: 20, left: 20 };
+function Voronoi() {
+  //set width for initial point plot
+  var width = window.innerWidth;
+  var height = window.innerHeight;
 
-  const width = window.innerWidth; //- margin.left - margin.right;
-  const height = window.innerHeight; //- -margin.top - margin.bottom;
+  // randomly pick color scheme
+  const colorSchemes = [
+    interpolateRainbow,
+    interpolatePlasma,
+    interpolateTurbo,
+    interpolateCool,
+    interpolateInferno,
+    interpolateYlOrRd,
+  ];
 
-  const color = interpolateInferno;
+  const color = colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+
+  // number of initial polygons
   var pointSeed = 8;
-  var pointIncreaseFactor = 30;
 
-  //   const ref = useRef();
-
+  // generate points for a given g size
   function generateRandomPoints(nPoints, minX, maxX, minY, maxY) {
     return d3.range(0, nPoints).map(function (i) {
       return [
@@ -34,32 +41,37 @@ function Voronoi2() {
     });
   }
 
-  var points = generateRandomPoints(pointSeed, 0, width, 0, height);
+  // initial points
+  var points = generateRandomPoints(
+    pointSeed,
+    0,
+    window.innerWidth,
+    0,
+    window.innerHeight
+  );
 
+  // plot on load
   useEffect(() => {
     plot();
-    // window.addEventListener("resize", plot());
   }, [points]);
 
-  var generateVoronoi = voronoi()
-    //   .x((d) => d[0])
-    //   .y((d) => d[1])
-    .extent([
-      [0, 0],
-      [width, height],
-    ]);
+  // initial voronoit function
+  var generateVoronoi = voronoi().extent([
+    [0, 0],
+    [width, height],
+  ]);
 
   var initialPolygons = generateVoronoi(points).polygons();
 
   const plot = () => {
     var svg = d3.select(".chart").attr("width", "100%").attr("height", "100%");
 
+    // append defs here and pass down
     var defs = d3.select(".chart").append("defs");
 
     drawVoronoi(svg, initialPolygons, undefined, 0);
     var subPolygons = drawSubPolygons(svg, initialPolygons, 1, defs);
     subPolygons = drawSubPolygons(svg, subPolygons, 2, defs);
-    subPolygons = drawSubPolygons(svg, subPolygons, 3, defs);
   };
 
   function drawVoronoi(parent, polygons, clipArea, level) {
@@ -81,26 +93,25 @@ function Voronoi2() {
         d3.hsl("#000").brighter(level);
       })
       .attr("fill", function () {
-        return level === 0 ? "" : interpolateInferno(Math.random());
+        return level === 0 ? "" : color(Math.random());
       })
       .attr("fill-opacity", "0.3")
       .attr("d", polyToPath);
   }
 
   function drawSubPolygons(parent, parentPols, level, defs) {
-    // TOOD: generate random points, should be limited to the bounding box
-
     var parentLevel = level - 1;
 
-    // we process each of the parent polygons
+    // find all parent polygons using parent level
     var selection = d3.selectAll('path[data-level="' + parentLevel + '"]');
 
-    var totalPolygons = [];
+    // iterate across each parent polygon
     selection.each(function (d, i) {
+      // determine the bounding box
       var box = this.getBBox();
 
-      // var points3 = generateRandomPoints(pointSeed * (level * pointIncreaseFactor), box.x, box.x + box.width, box.y, box.y + box.height);
-      var points20 = generateRandomPoints(
+      // gernerate new points for the bounding box of each polygon
+      var pointsNew = generateRandomPoints(
         pointSeed * level,
         box.x,
         box.x + box.width,
@@ -108,30 +119,25 @@ function Voronoi2() {
         box.y + box.height
       );
 
-      // use the extent to define where the new voronoi needs to be rendered.
+      // set extent of new voronoi based on bounding coords
       var voronoi2 = voronoi().extent([
         [box.x, box.y],
         [box.x + box.width, box.y + box.height],
       ]);
-      var polygons2 = voronoi2.polygons(points20);
 
-      // draw the new voronois suh
-      if (polygons2.length > 0) {
-        // the new voronois need to be added in the group with the parent clippath
+      //define new coords
+      var polygons2 = voronoi2.polygons(pointsNew);
 
-        drawVoronoi(
-          d3.select(this.parentNode),
-          polygons2,
-          "cp-" + parentLevel + "-" + i,
-          level
-        );
-        addClipPath(d, "cp-" + parentLevel + "-" + i, defs);
-      }
-
-      totalPolygons = totalPolygons.concat(polygons2);
+      // draw new Voronoi and clip based on parent clip path id
+      drawVoronoi(
+        d3.select(this.parentNode),
+        polygons2,
+        "cp-" + parentLevel + "-" + i,
+        level
+      );
+      addClipPath(d, "cp-" + parentLevel + "-" + i, defs);
     });
 
-    return totalPolygons.flat().flat();
   }
 
   function addClipPath(outline, pathId, defs) {
@@ -153,4 +159,4 @@ function Voronoi2() {
   );
 }
 
-export default Voronoi2;
+export default Voronoi;
