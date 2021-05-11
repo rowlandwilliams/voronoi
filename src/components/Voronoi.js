@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import voronoi from "d3-voronoi/src/voronoi";
 import {
@@ -30,7 +30,7 @@ function Voronoi() {
 
   // number of initial polygons
   // var pointSeed = 10;
-  var pointSeed = Math.floor(Math.random() * 10) + 5;
+  var pointSeed = Math.floor(Math.random() * 8) + 5;
 
   // generate points for a given g size
   function generateRandomPoints(nPoints, minX, maxX, minY, maxY) {
@@ -42,18 +42,13 @@ function Voronoi() {
     });
   }
 
-  // initial points
-  var points = generateRandomPoints(
-    pointSeed,
-    0,
-    window.innerWidth,
-    0,
-    window.innerHeight
-  );
-
   var pickColor = Math.random() < 0.5;
   var colorGlobal =
     colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+
+  const [points, setPoints] = useState(
+    generateRandomPoints(pointSeed, 0, window.innerWidth, 0, window.innerHeight)
+  );
 
   // plot on load
   useEffect(() => {
@@ -80,7 +75,7 @@ function Voronoi() {
     // drawVoronoi(svg, subPolygons, undefined, 3);
   };
 
-  function drawVoronoi(parent, polygons, clipArea, level, pickColor) {
+  function drawVoronoi(parent, polygons, clipArea, level, pickColor, isSub) {
     if (pickColor) {
       var localColor =
         colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
@@ -112,6 +107,17 @@ function Voronoi() {
       })
       .attr("fill-opacity", "0.3")
       .attr("d", polyToPath);
+    // .on("mousemove", (event) => moved(event));
+  }
+
+  function moved(event) {
+    var pointsNew = [...points];
+    pointsNew[0] = d3.pointer(event);
+    initialPolygons = generateVoronoi(pointsNew).polygons();
+
+    setPoints(pointsNew);
+    // initialPolygons = generateVoronoi(points).polygons();
+    // polyToPath();
   }
 
   function drawSubPolygons(parent, parentPols, level, defs, pickColor) {
@@ -142,14 +148,15 @@ function Voronoi() {
 
       //define new coords
       var polygons2 = voronoi2.polygons(pointsNew);
-
+      var isSub = true;
       // draw new Voronoi and clip based on parent clip path id
       drawVoronoi(
         d3.select(this.parentNode),
         polygons2,
         "cp-" + parentLevel + "-" + i,
         level,
-        pickColor
+        pickColor,
+        isSub
       );
       addClipPath(d, "cp-" + parentLevel + "-" + i, defs);
     });
@@ -175,11 +182,6 @@ function Voronoi() {
 }
 
 export default Voronoi;
-
-// function moved(event) {
-//   sites[0] = d3.pointer(event);
-//   redraw();
-// }
 
 // function redraw() {
 //   var diagram = generateVoronoi(sites);
